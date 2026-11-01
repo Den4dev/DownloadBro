@@ -1,7 +1,8 @@
 ﻿name: release
 
 # Релиз собирается по тегу: git tag v2.1.0 && git push origin v2.1.0
-# Артефакты: DownloadBro-<версия>-win64.zip, DownloadBro-<версия>-win64-ffmpeg.zip и DownloadBro-<версия>-setup.exe
+# Сборка даёт DownloadBro-<версия>-win64.zip, -win64-ffmpeg.zip и -setup.exe, но в релиз
+# кладётся только установщик: DownloadBro-<версия>-setup.exe
 
 on:
   push:
@@ -46,6 +47,7 @@ jobs:
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "installer\DownloadBro.iss"
 
       - name: Публикация релиза
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
