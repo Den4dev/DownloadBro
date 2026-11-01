@@ -1,0 +1,56 @@
+﻿name: release
+
+# Релиз собирается по тегу: git tag v2.1.0 && git push origin v2.1.0
+# Артефакты: DownloadBro-<версия>-win64.zip, DownloadBro-<версия>-win64-ffmpeg.zip и DownloadBro-<версия>-setup.exe
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Зависимости
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Версия из git-тега
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $ver = "${{ github.ref_name }}" -replace "^v", ""
+          "APP_VERSION=$ver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Сборка exe и архивов
+        shell: pwsh
+        run: |
+          if ($env:APP_VERSION) { python tools/release.py --set-version $env:APP_VERSION }
+          else { python tools/release.py }
+
+      - name: Установщик Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "installer\DownloadBro.iss"
+
+      - name: Публикация релиза
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            release/DownloadBro-*-setup.exe
+          body: |
+            В релизе один файл: `DownloadBro-<версия>-setup.exe` — установщик с ярлыками.
+            FFmpeg уже внутри, MP3/M4A/OPUS и склейка MP4 работают сразу после установки.

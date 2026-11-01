@@ -1,0 +1,16 @@
+﻿# окружение и артефакты сборки
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+release/
+DownloadBro.exe
+
+# рабочие логи: падают рядом с exe
+*.log
+DownloadBro_ошибка.txt
+
+# локальное
+.DS_Store
+Thumbs.db
